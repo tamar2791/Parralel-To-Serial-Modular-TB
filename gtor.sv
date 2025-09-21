@@ -8,7 +8,7 @@ class p2s_generator;
 
    function new(mailbox #(p2s_item_t)mbx,
          int unsigned num_items = P2S_DEFAULT_NUM_ITEMS,
-         int unsigned seed);
+         int unsigned seed = 32'hC0FF_EE01);
       this.mbx_gen2drv = mbx;
       this.num_items = num_items;
       this.seed = seed;
@@ -18,7 +18,7 @@ class p2s_generator;
       p2s_item_t item;
       byte tmp;
 
-      procces::self().srandom(seed);
+      process::self().srandom(seed);
 
       for(int i = 0; i < num_items; i++)
       begin
