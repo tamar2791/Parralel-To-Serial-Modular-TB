@@ -1,31 +1,47 @@
-module driver;
-   
-   //-----
-   // Signal driver
-   //----
-   int item_cntr = 0;
-   
-   initial begin
-      // Give legal initial state to all inputs at time = 0
-      load = '0;
-      parallel_in = '0; // not strictly required. But cleaner
-      // @ (posedge rstn); // wait for reset to be raised
-      repeat (5) @ (posedge clk); 
+import p2s_pkg::*;
 
-      repeat (NUM_ITEMS) begin
-	 @ (posedge clk); // Good to ensure that drive at a clock edge. 
-	 #1; // We won't discuss this here, but is required 
-	 load = '1;
-	 parallel_in = parallel_in_gen [item_cntr++];
-	 @ (posedge clk);
-	 #1 load = '0;	 
-	 
-	 // Design assumption is that no new parallel data while is being serialized
-	 repeat (8) @ (posedge clk);
-	 
-      end // repeat (NUM_ITEMS)
+class p2s_driver;
 
-      repeat (10) @ (posedge clk);  // flush time for design
-      $finish ();      // End the simulation when stimuli are done
-   end // initial begin
-endmodule
+   virtual interface par_to_ser_if.DRV vif;
+   mailbox #(p2s_item) mbx_gen2drv;
+
+   int unsigned num_items = P2S_DEFAULT_NUM_ITEMS;
+
+   int unsigned serial_len;
+
+   function new(virtual interface par_to_ser_if.DRV vif,
+         mailbox #(p2s_item) mbx,
+         int unsigned num_items = 10);
+      this.vif = vif;
+      thus.mbx_gen2drv = mbx;
+      this.num_items = num_items;
+      this.serial_len = vif.SERIAL_LEN;
+   endfunction
+
+   task automatic reset_phase();
+      vif.cb_drv.load        <= '0;
+      vif.cb_drv.parallel_in <= '0;
+      if (!vif.rst_n) begin
+         wait (vif.rst_n == 1'b1);
+         repeat (2) @(vif.cb_drv);
+      end
+   endtask
+
+   task automatic run();
+      p2s_item;
+      int i;
+      reset_phase();
+      repeat(3) @(vif.cb_drv);
+      for (i = 0; i < num_items; i++) 
+      begin
+         mbx_gen2drv.get(item);
+         @(vif.cb_drv);
+         vif.cb_drv.parallel_in <= item.data;
+         vif.cb_drv.load        <= '1;
+         @(vif.cb_drv);
+         vif.cb_drv.load        <= '0;
+         repeat (serial_len) @(vif.cb_drv);  
+      end
+   endtask
+   
+endclass
