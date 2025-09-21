@@ -3,17 +3,17 @@ import p2s_pkg::*;
 class p2s_driver;
 
    virtual interface par_to_ser_if.DRV vif;
-   mailbox #(p2s_item) mbx_gen2drv;
+   mailbox #(p2s_item_t) mbx_gen2drv;
 
    int unsigned num_items = P2S_DEFAULT_NUM_ITEMS;
 
    int unsigned serial_len;
 
    function new(virtual interface par_to_ser_if.DRV vif,
-         mailbox #(p2s_item) mbx,
+         mailbox #(p2s_item_t) mbx,
          int unsigned num_items = 10);
       this.vif = vif;
-      thus.mbx_gen2drv = mbx;
+      this.mbx_gen2drv = mbx;
       this.num_items = num_items;
       this.serial_len = vif.SERIAL_LEN;
    endfunction
@@ -28,7 +28,7 @@ class p2s_driver;
    endtask
 
    task automatic run();
-      p2s_item;
+      p2s_item_t item;
       int i;
       reset_phase();
       repeat(3) @(vif.cb_drv);
