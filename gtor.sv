@@ -1,27 +1,30 @@
-module generator;
-   //-----
-   // Clock generator
-   //----
-   initial begin
-      clk = '0;
-      forever clk = #10ns ~clk;      
-   end
+import p2s_pkg::*;
 
-      //-----
-   // Reset generator
-   //----
+class p2s_generator;
 
-   //-----
-   // Generator
-   //----
-      
-   reg [NUM_ITEMS-1:0] [7:0] parallel_in_gen;
+   mailbox #(p2s_item_t) mbx_gen2drv;
+   int unsigned num_items = P2S_DEFAULT_NUM_ITEMS;
+   int unsigned seed = 32'hC0FF_EE01;
 
-   initial begin
-      // Generate here all random inputs at time = 0
-      //  This is NOT ideal, since uses lots of storage, but is required in Verilog TB
-      for (int i = 0; i < NUM_ITEMS; i++)
-	parallel_in_gen [i] = $random () % (2^8);
-      
-   end
-endmodule
+   function new(mailbox #(p2s_item_t)mbx,
+         int unsigned num_items = P2S_DEFAULT_NUM_ITEMS,
+         int unsigned seed);
+      this.mbx_gen2drv = mbx;
+      this.num_items = num_items;
+      this.seed = seed;
+   endfunction
+
+   task automatic run();
+      p2s_item_t item;
+      byte tmp;
+
+      procces::self().srandom(seed);
+
+      for(int i = 0; i < num_items; i++)
+      begin
+         void'(std::randomize(tmp));
+         item.data = tmp;
+         mbx_gen2drv.put(item);
+      end
+   endtask
+endclass
