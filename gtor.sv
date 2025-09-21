@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 import p2s_pkg::*;
 
 class p2s_generator;

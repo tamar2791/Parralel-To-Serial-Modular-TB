@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 import p2s_pkg::*;
 
 class p2s_scoreboard;
@@ -20,15 +21,15 @@ class p2s_scoreboard;
       this.stop_when_done = stop_when_done;
    endfunction
 
-   function void check_one(const ref p2s_txn_t tr, int unsigned idx);
+   function void check_one(p2s_txn_t tr, int unsigned idx);
       if (tr.par !== tr.ser)
       begin
          errors++;
-         for(int i = 0; i <serial_len; i++)
+         for(int i = 0; i < serial_len; i++)
          begin
             if(tr.par[i] !== tr.ser[i])
             begin
-               $error("SB: item %0d bit %0d mismatch: EXP=%0b ACT=%0b (par=0x%02h ser=0x%02h)",idx, i, tr.par[b], tr.ser[i], tr.par, tr.ser);
+               $error("SB: item %d bit %d mismatch: EXP=%b ACT=%b (par=0x%02h ser=0x%02h)",idx, i, tr.par[i], tr.ser[i], tr.par, tr.ser);
             end
          end
       end
@@ -38,7 +39,7 @@ class p2s_scoreboard;
       p2s_txn_t tr;
       if(num_items > 0)
       begin
-         for(int i = 0; i < num_items; i++)
+         for(int unsigned i = 0; i < num_items; i++)
          begin
             mbx_mon2sb.get(tr);
             check_one(tr,i);
@@ -49,10 +50,11 @@ class p2s_scoreboard;
       end
       else
       begin
-         int i = 0;
+         int unsigned i = 0;
          forever begin
             mbx_mon2sb.get(tr);
-            check_one(tr,i++);
+            check_one(tr,i);
+            i++;
             seen++;
          end
       end

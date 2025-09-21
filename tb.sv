@@ -37,7 +37,8 @@ module tb;
       mon.run();
       sb.run();
     join_any
-    disable fork;
+    
+    wait (sb.seen == NUM_ITEMS);
 
     repeat (2) @(posedge clk);
 

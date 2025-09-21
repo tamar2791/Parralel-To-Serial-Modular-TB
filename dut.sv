@@ -1,3 +1,6 @@
+`timescale 1ns/1ps
+import p2s_pkg::*;
+
 module parallel_to_serial (par_to_ser_if.DUT ifc);
 
    logic [P2S_SERIAL_LEN-1:0] shift_register;
